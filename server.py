@@ -1,24 +1,19 @@
 import asyncio
 import websockets
 
+# Сохраняем все сообщения здесь
 messages = []
 
-async def handle_client(websocket, path):
-    if path != "/ws":
-        await websocket.close()
-        return
-
-    for msg in messages:
-        await websocket.send(msg)
-
+async def echo(websocket):
     async for message in websocket:
         messages.append(message)
-        await websocket.send(message)
+        print(f"Received: {message}")
+        await websocket.send(f"Server got: {message}")
 
 async def main():
-    async with websockets.serve(handle_client, "0.0.0.0", 8000, path="/ws"):
-        print("Сервер запущен на порту 8000")
-        await asyncio.Future()
+    async with websockets.serve(echo, "0.0.0.0", 8000):
+        print("WebSocket server started on port 8000")
+        await asyncio.Future()  # Ждём бесконечно
 
 if __name__ == "__main__":
     asyncio.run(main())

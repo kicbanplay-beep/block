@@ -1,19 +1,29 @@
 import asyncio
 import websockets
 
-# Сохраняем все сообщения здесь
-messages = []
+# Хранилище всех подключенных клиентов
+connected_clients = set()
 
 async def echo(websocket):
-    async for message in websocket:
-        messages.append(message)
-        print(f"Received: {message}")
-        await websocket.send(f"Server got: {message}")
+    # Добавляем нового клиента в список
+    connected_clients.add(websocket)
+    try:
+        async for message in websocket:
+            print(f"Получено сообщение: {message}")
+            # Рассылаем сообщение всем клиентам (чтобы был общий чат)
+            for client in connected_clients:
+                if client != websocket:
+                    await client.send(message)
+    except websockets.exceptions.ConnectionClosed:
+        print("Клиент отключился")
+    finally:
+        connected_clients.remove(websocket)
 
 async def main():
+    # Создаём сервер на всех интерфейсах на порту 8000
     async with websockets.serve(echo, "0.0.0.0", 8000):
-        print("WebSocket server started on port 8000")
-        await asyncio.Future()  # Ждём бесконечно
+        print("Сервер WebSocket запущен на порту 8000")
+        await asyncio.Future()  # Ожидание навсегда
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,44 +1,22 @@
-import os
 import asyncio
-from aiohttp import web
-import aiohttp
+import websockets
 
-PORT = int(os.environ.get("PORT", 8000))
-
+# 1️⃣ Список для хранения сообщений
 messages = []
 
-async def websocket_handler(request):
-    ws = web.WebSocketResponse()
-    await ws.prepare(request)
-
+# 2️⃣ Функция для обработки сообщений
+async def echo(websocket, path):
     # Отправляем клиенту все предыдущие сообщения
     for msg in messages:
-        await ws.send_str(msg)
+        await websocket.send(msg)
 
-    async for msg in ws:
-        if msg.type == aiohttp.WSMsgType.TEXT:
-            messages.append(msg.data)   # сохраняем
-            # рассылаем всем подключенным клиентам (тут пока один клиент)
-            await ws.send_str(msg.data)
+    async for message in websocket:
+        messages.append(message)   # сохраняем новое сообщение
+        await websocket.send(message)  # возвращаем клиенту (echo)
 
-    return ws
-# HTTP-сервер для index.html
-async def index(request):
-    return web.FileResponse('index.html')
-
-# WebSocket обработчик
-async def websocket_handler(request):
-    ws = web.WebSocketResponse()
-    await ws.prepare(request)
-
-    async for msg in ws:
-        if msg.type == aiohttp.WSMsgType.TEXT:
-            await ws.send_str(f"Echo: {msg.data}")
-
-    return ws
-
-app = web.Application()
-app.router.add_get('/', index)
-app.router.add_get('/ws', websocket_handler)  # WebSocket endpoint
-
-web.run_app(app, host='0.0.0.0', port=PORT)
+# 3️⃣ Запуск сервера
+if name == "__main__":
+    start_server = websockets.serve(echo, "0.0.0.0", 8000)
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()
+    

@@ -1,25 +1,11 @@
 import asyncio
 import websockets
-import os
 
-PORT = int(os.environ.get("PORT", 8765))  # Render сам подставит PORT
-print(f"✅ WebSocket server running on port {PORT}")
+async def echo(websocket, path):
+    async for message in websocket:
+        await websocket.send(f"Echo: {message}")
 
-connected = set()
+start_server = websockets.serve(echo, "0.0.0.0", 8000)
 
-async def handler(websocket, path):
-    connected.add(websocket)
-    try:
-        async for message in websocket:
-            # рассылаем всем подключённым
-            for conn in connected:
-                if conn != websocket:
-                    await conn.send(message)
-    finally:
-        connected.remove(websocket)
-
-async def main():
-    async with websockets.serve(handler, "0.0.0.0", PORT):
-        await asyncio.Future()  # держим сервер вечно
-
-asyncio.run(main())
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()

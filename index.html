@@ -1,77 +1,136 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Chat</title>
+    <title>Реальный WebSocket чат</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #222; color: #eee; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 0; height: 100vh; }
-        #chat { width: 80%; max-width: 600px; flex: 1; overflow-y: auto; border: 1px solid #555; padding: 10px; margin: 10px 0; background: #111; }
-        #inputArea { display: flex; width: 80%; max-width: 600px; }
-        #msg { flex: 1; padding: 10px; border: 1px solid #555; background: #333; color: #eee; }
-        button { padding: 10px 20px; margin-left: 5px; background: #444; border: 1px solid #555; color: #eee; cursor: pointer; }
-        button:hover { background: #555; }
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #1e1e2f;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            background: #2b2b3b;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            background: #3c3c4f;
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.me {
+            background: #5a5aff;
+            align-self: flex-end;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(10px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        .input-container {
+            display: flex;
+            border-top: 1px solid #444;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            background: #1e1e2f;
+            color: #fff;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            background: #5a5aff;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #4040ff;
+        }
     </style>
 </head>
 <body>
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Напиши сообщение...">
+            <button onclick="sendMessage()">Отправить</button>
+        </div>
+    </div>
 
-<h2>WebSocket Chat</h2>
-<div id="chat"></div>
-<div id="inputArea">
-    <input type="text" id="msg" placeholder="Введите сообщение..." />
-    <button onclick="sendMessage()">Отправить</button>
-</div>
+    <script>
+        const messagesEl = document.getElementById('messages');
+        const inputEl = document.getElementById('messageInput');
 
-<script>
-let ws;
+        // Подключаемся к серверу WebSocket
+        const socket = new WebSocket(`wss://${window.location.host}`);
 
-function addLog(message) {
-    const chat = document.getElementById("chat");
-    const p = document.createElement("p");
-    p.textContent = message;
-    chat.appendChild(p);
-    chat.scrollTop = chat.scrollHeight;
-}
+        socket.addEventListener('open', () => {
+            console.log('Подключение к WebSocket установлено');
+        });
 
-function connect() {
-    ws = new WebSocket("wss://rdr-io.onrender.com");
+        socket.addEventListener('message', (event) => {
+            addMessage(event.data, false);
+        });
 
-    ws.onopen = () => {
-        console.log("Connected!");
-        addLog("✅ Подключено к серверу");
-    };
+        function addMessage(text, isMe) {
+            const msg = document.createElement('div');
+            msg.classList.add('message');
+            if (isMe) msg.classList.add('me');
+            msg.textContent = text;
+            messagesEl.appendChild(msg);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
 
-    ws.onmessage = (event) => {
-        addLog("💬 Сервер: " + event.data);
-    };
+        function sendMessage() {
+            const text = inputEl.value.trim();
+            if (!text) return;
+            addMessage(text, true);
+            socket.send(text);
+            inputEl.value = '';
+        }
 
-    ws.onclose = () => {
-        console.log("WebSocket closed, reconnecting in 3s...");
-        addLog("❌ Соединение закрыто. Переподключение...");
-        setTimeout(connect, 3000);
-    };
-
-    ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
-    };
-}
-
-function sendMessage() {
-    const input = document.getElementById("msg");
-
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(input.value);
-        addLog("🗨 Вы: " + input.value);
-        input.value = "";
-    } else if (ws.readyState === WebSocket.CONNECTING) {
-        alert("Соединение ещё устанавливается, подождите...");
-    } else {
-        alert("WebSocket закрыт. Страница автоматически переподключится.");
-    }
-}
-
-connect();
-</script>
-
+        inputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
 </body>
 </html>

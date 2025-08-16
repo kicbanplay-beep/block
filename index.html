@@ -1,122 +1,50 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Unblock WebSocket Chat</title>
-<style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0f0f13;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  .chat {
-    width: 400px;
-    height: 600px;
-    background: #14141b;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .chat-header {
-    background: #6b2dff;
-    padding: 12px;
-    text-align: center;
-    font-weight: bold;
-  }
-  .chat-messages {
-    flex: 1;
-    padding: 10px;
-    overflow-y: auto;
-  }
-  .msg {
-    margin: 6px 0;
-    padding: 8px 12px;
-    border-radius: 12px;
-    max-width: 80%;
-    word-wrap: break-word;
-  }
-  .msg.in {
-    background: #1e1e27;
-    align-self: flex-start;
-  }
-  .msg.out {
-    background: linear-gradient(135deg, #6b2dff, #8657ff);
-    align-self: flex-end;
-  }
-  .chat-input {
-    display: flex;
-    border-top: 1px solid #232334;
-  }
-  .chat-input input {
-    flex: 1;
-    border: none;
-    padding: 12px;
-    background: #0f0f13;
-    color: #fff;
-    outline: none;
-  }
-  .chat-input button {
-    background: #6b2dff;
-    border: none;
-    padding: 12px 16px;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-  }
-</style>
+    <meta charset="UTF-8">
+    <title>WebSocket Test</title>
 </head>
 <body>
-<div class="chat">
-  <div class="chat-header">💬 Unblock Chat</div>
-  <div class="chat-messages" id="messages"></div>
-  <div class="chat-input">
-    <input type="text" id="msgInput" placeholder="Напишите сообщение...">
-    <button onclick="sendMessage()">➤</button>
-  </div>
-</div>
+    <h1>WebSocket Test</h1>
+    <input id="msg" placeholder="Type message">
+    <button onclick="sendMessage()">Send</button>
+    <ul id="log"></ul>
 
-<script>
-  // ⚠️ Здесь вставь адрес твоего backend-сервера
-  const ws = new WebSocket("wss://rdr-io.onrender.com/ws");
+    <script>
+        // Подключаемся к серверу
+        const ws = new WebSocket("wss://rdr-io.onrender.com");
 
-  const messagesDiv = document.getElementById("messages");
-  const input = document.getElementById("msgInput");
+        ws.onopen = () => {
+            console.log("Connected to WebSocket server");
+            addLog("Connected!");
+        };
 
-  ws.onopen = () => {
-    console.log("✅ Подключено к WebSocket серверу");
-  };
+        ws.onmessage = (event) => {
+            console.log("Received:", event.data);
+            addLog(event.data);
+        };
 
-  ws.onmessage = (event) => {
-    addMessage(event.data, "in");
-  };
+        ws.onclose = () => {
+            console.log("WebSocket closed");
+            addLog("Disconnected!");
+        };
 
-  function sendMessage() {
-    const text = input.value.trim();
-    if (text) {
-      ws.send(text);
-      addMessage(text, "out");
-      input.value = "";
-    }
-  }
+        function sendMessage() {
+            const input = document.getElementById("msg");
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(input.value);
+                input.value = "";
+            } else {
+                alert("WebSocket is not open");
+            }
+        }
 
-  function addMessage(text, type) {
-    const msg = document.createElement("div");
-    msg.classList.add("msg", type);
-    msg.textContent = text;
-    messagesDiv.appendChild(msg);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
-</script>
+        function addLog(msg) {
+            const log = document.getElementById("log");
+            const li = document.createElement("li");
+            li.textContent = msg;
+            log.appendChild(li);
+        }
+    </script>
 </body>
 </html>

@@ -15,7 +15,7 @@ async def echo(websocket, path):
         await websocket.send(message)  # возвращаем клиенту (echo)
 
 # 3️⃣ Запуск сервера
-if name == "__main__":
+if __name__ == "__main__":
     start_server = websockets.serve(echo, "0.0.0.0", 8000)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()

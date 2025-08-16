@@ -5,6 +5,23 @@ import aiohttp
 
 PORT = int(os.environ.get("PORT", 8000))
 
+messages = []
+
+async def websocket_handler(request):
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+
+    # Отправляем клиенту все предыдущие сообщения
+    for msg in messages:
+        await ws.send_str(msg)
+
+    async for msg in ws:
+        if msg.type == aiohttp.WSMsgType.TEXT:
+            messages.append(msg.data)   # сохраняем
+            # рассылаем всем подключенным клиентам (тут пока один клиент)
+            await ws.send_str(msg.data)
+
+    return ws
 # HTTP-сервер для index.html
 async def index(request):
     return web.FileResponse('index.html')

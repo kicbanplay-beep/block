@@ -14,5 +14,5 @@ async def main():
         print(f"Server started on port {PORT}")
         await asyncio.Future()  # держим сервер запущенным
 
-if name == "__main__":
+if __name__ == "__main__":
     asyncio.run(main())

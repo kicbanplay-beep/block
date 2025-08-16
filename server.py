@@ -1,22 +1,20 @@
 import asyncio
 import websockets
 
-# 1️⃣ Список для хранения сообщений
 messages = []
 
-# 2️⃣ Функция для обработки сообщений
-async def echo(websocket, path):
-    # Отправляем клиенту все предыдущие сообщения
+async def echo(websocket):
+    # Отправляем все прошлые сообщения новому клиенту
     for msg in messages:
         await websocket.send(msg)
-
+    # Получаем новые сообщения
     async for message in websocket:
-        messages.append(message)   # сохраняем новое сообщение
-        await websocket.send(message)  # возвращаем клиенту (echo)
+        messages.append(message)
+        await websocket.send(message)
 
-# 3️⃣ Запуск сервера
+async def main():
+    async with websockets.serve(echo, "0.0.0.0", 8000):
+        await asyncio.Future()  # Ждём бесконечно
+
 if __name__ == "__main__":
-    start_server = websockets.serve(echo, "0.0.0.0", 8000)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
-    
+    asyncio.run(main())

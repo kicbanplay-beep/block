@@ -16,5 +16,5 @@ async def main():
     async with websockets.serve(echo, "0.0.0.0", 8000):
         await asyncio.Future()  # run forever
 
-if name == "__main__":
+if __name__ == "__main__":
     asyncio.run(main())
